@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import datetime
+from datetime import datetime
 from matplotlib.patches import Wedge
 from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
@@ -46,7 +46,7 @@ for name, meta in sheets.items():
 df = pd.concat(all_data)
 
 # --- Beregninger ---
-total_sum = df['Pris'].sum()
+total_sum = df["Pris"].sum()
 total_count = len(df)
 procent = total_sum / total_goal if total_goal else 0
 
@@ -54,8 +54,15 @@ procent = total_sum / total_goal if total_goal else 0
 start_uge = 18
 slut_uge = 26
 alle_uger = list(range(start_uge, slut_uge + 1))
-ugevis = df.groupby('Uge')['Pris'].sum().reindex(alle_uger, fill_value=0)
+
+ugevis = df.groupby("Uge")["Pris"].sum().reindex(alle_uger, fill_value=0)
 ugevis.index = ugevis.index.map(lambda u: f"Uge {u}")
+
+# --- Restmål-beregning ---
+nu_uge = datetime.now().isocalendar().week
+resterende_uger = len([u for u in alle_uger if u > nu_uge])
+manglende_beloeb = max(total_goal - total_sum, 0)
+restmaal = manglende_beloeb / resterende_uger if resterende_uger > 0 else manglende_beloeb
 
 # --- Layout ---
 st.set_page_config(page_title="Channels Dashboard", layout="wide")
@@ -77,10 +84,11 @@ with col1:
             spine.set_visible(False)
         ugevis.plot(ax=ax, marker='o', label='Realisering', color='steelblue')
 
-        ugentlig_maal = total_goal / (slut_uge - start_uge + 1)
+        ugentlig_maal = total_goal / len(alle_uger)
         ax.axhline(y=ugentlig_maal, color='orange', linestyle='--', label='Mål pr. uge')
+        if restmaal > 0:
+            ax.axhline(y=restmaal, color='red', linestyle='--', label='Nyt ugemål for at nå Q2')
 
-        nu_uge = datetime.datetime.now().isocalendar().week
         uge_labels = list(ugevis.index)
         if f"Uge {nu_uge}" in uge_labels:
             pos = uge_labels.index(f"Uge {nu_uge}")
@@ -130,7 +138,6 @@ for i, (navn, row) in enumerate(produkt_data.iterrows()):
     </div>
     """, unsafe_allow_html=True)
 
-# Antal produkter
 cols[5].markdown(f"""
 <div style="text-align:center; padding:10px; background:white; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
   <div style="font-size:18px; font-weight:bold;">Antal produkter solgt</div>
