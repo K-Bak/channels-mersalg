@@ -18,10 +18,12 @@ client = gspread.authorize(credentials)
 
 # --- Sheet IDs ---
 sheets = {
-    "Google Ads": {"id": "1qGfpJ5wTqLAFtDmKaauOXouAwMKWhIBg9bIyWPEbkzc", "goal": 96555},
-    "Project":    {"id": "1hvIk4XgXjkHRCDyR8ScRNS82nDRPpsPbdASFZZdAAOE", "goal": 72465},
-    "Social":     {"id": "1hSHzko--Pnt2R6iZD_jyi-WMOycVw49snibLi575Z2M", "goal": 90880},
-    "SEO":        {"id": "1sQuYdHhrA23zMO7tqyOFQ_m6uHYsfAr4vg3muXl6K_w", "goal": 80000},
+    "Google Ads": {"id": "1qGfpJ5wTqLAFtDmKaauOXouAwMKWhIBg9bIyWPEbkzc", "goal": 96555, "sheet": "Mersalg"},
+    "Project":    {"id": "1hvIk4XgXjkHRCDyR8ScRNS82nDRPpsPbdASFZZdAAOE", "goal": 72465, "sheet": "Salg"},
+    "Social":     {"id": "1hSHzko--Pnt2R6iZD_jyi-WMOycVw49snibLi575Z2M", "goal": 90880, "sheet": "Salg"},
+    "SEO":        {"id": "1sQuYdHhrA23zMO7tqyOFQ_m6uHYsfAr4vg3muXl6K_w", "goal": 80000, "sheet": "Salg"},
+    "Web":        {"id": "1plU6MRL7v9lkQ9VeaGJUD4ljuftZve16nPF8N6y36Kg", "goal": 65000, "sheet": "Salg"},
+    "Strategy":   {"id": "1qGfpJ5wTqLAFtDmKaauOXouAwMKWhIBg9bIyWPEbkzc", "goal": 50000, "sheet": "Strategy"},
 }
 
 # --- Hent og saml data ---
@@ -30,8 +32,7 @@ total_goal = 0
 
 for name, meta in sheets.items():
     try:
-        sheet_name = "Mersalg" if name == "Google Ads" else "Salg"
-        ws = client.open_by_key(meta["id"]).worksheet(sheet_name)
+        ws = client.open_by_key(meta["id"]).worksheet(meta["sheet"])
         df = get_as_dataframe(ws, evaluate_formulas=True)
         df = df.dropna(how="all")
         df = df[["Produkt", "Pris", "Dato for salg"]].dropna(subset=["Produkt", "Pris"])
