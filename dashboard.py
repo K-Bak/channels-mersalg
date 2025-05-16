@@ -6,6 +6,9 @@ from matplotlib.patches import Wedge
 from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 
+# --- Streamlit config først ---
+st.set_page_config(page_title="Channels Dashboard", layout="wide")
+
 # --- Setup ---
 import gspread
 from gspread_dataframe import get_as_dataframe
@@ -22,8 +25,8 @@ sheets = {
     "Project":    {"id": "1hvIk4XgXjkHRCDyR8ScRNS82nDRPpsPbdASFZZdAAOE", "goal": 72465, "sheet": "Salg"},
     "Social":     {"id": "1hSHzko--Pnt2R6iZD_jyi-WMOycVw49snibLi575Z2M", "goal": 90880, "sheet": "Salg"},
     "SEO":        {"id": "1sQuYdHhrA23zMO7tqyOFQ_m6uHYsfAr4vg3muXl6K_w", "goal": 80000, "sheet": "Salg"},
-    "Web":        {"id": "1plU6MRL7v9lkQ9VeaGJUD4ljuftZve16nPF8N6y36Kg", "goal": 65000, "sheet": "Salg"},
-    "Strategy":   {"id": "1qGfpJ5wTqLAFtDmKaauOXouAwMKWhIBg9bIyWPEbkzc", "goal": 50000, "sheet": "Strategy"},
+    "Web":        {"id": "1plU6MRL7v9lkQ9VeaGJUD4ljuftZve16nPF8N6y36Kg", "goal": 75000, "sheet": "Salg"},
+    "Strategy":   {"id": "1qGfpJ5wTqLAFtDmKaauOXouAwMKWhIBg9bIyWPEbkzc", "goal": 65000, "sheet": "Strategy"},
 }
 
 # --- Hent og saml data ---
@@ -44,7 +47,17 @@ for name, meta in sheets.items():
     except Exception as e:
         st.warning(f"Fejl ved indlæsning af {name}: {e}")
 
+# Saml alt data
 df = pd.concat(all_data)
+
+# Sidebar: vælg uge
+st.sidebar.header("Ugefilter")
+alle_uger = sorted(df['Uge'].dropna().unique())
+valg = st.sidebar.selectbox("Vælg uge", ["Alle"] + [f"Uge {u}" for u in alle_uger])
+
+if valg != "Alle":
+    valgte_uge = int(valg.split()[-1])
+    df = df[df['Uge'] == valgte_uge]
 
 # --- Beregninger ---
 total_sum = df["Pris"].sum()
@@ -55,7 +68,6 @@ procent = total_sum / total_goal if total_goal else 0
 start_uge = 18
 slut_uge = 26
 alle_uger = list(range(start_uge, slut_uge + 1))
-
 ugevis = df.groupby("Uge")["Pris"].sum().reindex(alle_uger, fill_value=0)
 ugevis.index = ugevis.index.map(lambda u: f"Uge {u}")
 
@@ -66,7 +78,6 @@ manglende_beloeb = max(total_goal - total_sum, 0)
 restmaal = manglende_beloeb / resterende_uger if resterende_uger > 0 else manglende_beloeb
 
 # --- Layout ---
-st.set_page_config(page_title="Channels Dashboard", layout="wide")
 st.markdown("<h1 style='text-align: center;margin-top:-50px;margin-bottom:-80px'>Channels - Samlet overblik (Q2)</h1>", unsafe_allow_html=True)
 from streamlit_autorefresh import st_autorefresh
 st_autorefresh(interval=300_000, key="datarefresh")
@@ -88,7 +99,7 @@ with col1:
         ugentlig_maal = total_goal / len(alle_uger)
         ax.axhline(y=ugentlig_maal, color='orange', linestyle='--', label='Mål pr. uge')
         if restmaal > 0:
-            ax.axhline(y=restmaal, color='red', linestyle='--', label='Nyt ugemål for at nå Q2')
+            ax.axhline(y=restmaal, color='red', linestyle='--', label='Ugemål')
 
         uge_labels = list(ugevis.index)
         if f"Uge {nu_uge}" in uge_labels:
